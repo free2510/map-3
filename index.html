@@ -24,12 +24,12 @@
                 zoom: 12
             });
 
-            // Add marker for the first point (red)
+            // Add marker for the starting point (red)
             new mapboxgl.Marker({ color: 'red' })
                 .setLngLat([lng1, lat1])
                 .addTo(map);
 
-            // Add marker for the second point (blue)
+            // Add marker for the destination point (blue)
             new mapboxgl.Marker({ color: 'blue' })
                 .setLngLat([lng2, lat2])
                 .addTo(map);
@@ -63,7 +63,7 @@
 
         }
 
-        // Get latitude and longitude from query parameters for point 1
+        // Get latitude and longitude from query parameters for the starting point
         const urlParams = new URLSearchParams(window.location.search);
         const lat1 = parseFloat(urlParams.get('lat1'));
         const lng1 = parseFloat(urlParams.get('lng1'));
@@ -75,7 +75,7 @@
                 let nearestSpot;
                 let minDistance = Infinity;
 
-                // Find the nearest available parking spot to point 1
+                // Find the nearest available parking spot to the starting point
                 Object.values(parkingSpots).forEach(spot => {
                     if (!spot.occupied) {
                         const distance = Math.sqrt((spot.latitude - lat1) ** 2 + (spot.longitude - lng1) ** 2);
@@ -87,7 +87,7 @@
                 });
 
                 if (nearestSpot) {
-                    // Initialize map with provided coordinates for point 1 and the nearest parking spot
+                    // Initialize map with provided coordinates for the starting point and the nearest parking spot
                     initializeMap(lat1, lng1, nearestSpot.latitude, nearestSpot.longitude);
                 } else {
                     console.error("No available parking spots found.");
