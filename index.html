@@ -13,26 +13,7 @@
 </head>
 <body>
     <div id="map"></div>
-    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js"></script>
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCSMlIol-7KSVR22X7WS6uceayDyNZM3bM",
-            authDomain: "smart-village.firebaseapp.com",
-            databaseURL: "https://smart-village-default-rtdb.firebaseio.com",
-            projectId: "smart-village",
-            storageBucket: "smart-village.appspot.com",
-            messagingSenderId: "377675537554",
-            appId: "1:377675537554:web:f24ce5ecc1f57ae3555a4b"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-
-        // Reference to your Firebase database
-        const database = firebase.database();
-
         mapboxgl.accessToken = 'pk.eyJ1IjoiZnJlZWZyZWU2MCIsImEiOiJjbHdyZ2hlamwwMGczMmlzYXJiem9oaHFxIn0.bp_4Do2mZmVjZwkDxlWmfw';
 
         function initializeMap(lat1, lng1, lat2, lng2) {
@@ -87,31 +68,34 @@
         const lat1 = parseFloat(urlParams.get('lat1'));
         const lng1 = parseFloat(urlParams.get('lng1'));
 
-        // Fetch all parking spots from Firebase Realtime Database
-        database.ref('parking_spots').once('value', function(snapshot) {
-            const parkingSpots = snapshot.val();
-            let nearestSpot;
-            let minDistance = Infinity;
+        // Fetch parking spots data from Firebase Realtime Database
+        fetch('https://smart-vilage-default-rtdb.firebaseio.com/parking_spots.json?auth=AIzaSyCSMlIol-7KSVR22X7WS6uceayDyNZM3bM')
+            .then(response => response.json())
+            .then(parkingSpots => {
+                let nearestSpot;
+                let minDistance = Infinity;
 
-            // Find the nearest available parking spot to point 1
-            Object.keys(parkingSpots).forEach(spotId => {
-                const spot = parkingSpots[spotId];
-                if (!spot.occupied) {
-                    const distance = Math.sqrt((spot.latitude - lat1) ** 2 + (spot.longitude - lng1) ** 2);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        nearestSpot = spot;
+                // Find the nearest available parking spot to point 1
+                Object.values(parkingSpots).forEach(spot => {
+                    if (!spot.occupied) {
+                        const distance = Math.sqrt((spot.latitude - lat1) ** 2 + (spot.longitude - lng1) ** 2);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            nearestSpot = spot;
+                        }
                     }
-                }
-            });
+                });
 
-            if (nearestSpot) {
-                // Initialize map with provided coordinates for point 1 and the nearest parking spot
-                initializeMap(lat1, lng1, nearestSpot.latitude, nearestSpot.longitude);
-            } else {
-                console.error("No available parking spots found.");
-            }
-        });
+                if (nearestSpot) {
+                    // Initialize map with provided coordinates for point 1 and the nearest parking spot
+                    initializeMap(lat1, lng1, nearestSpot.latitude, nearestSpot.longitude);
+                } else {
+                    console.error("No available parking spots found.");
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching parking spots:", error);
+            });
     </script>
 </body>
 </html>
