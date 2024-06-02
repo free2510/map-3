@@ -86,25 +86,32 @@
         const urlParams = new URLSearchParams(window.location.search);
         const lat1 = urlParams.get('lat1');
         const lng1 = urlParams.get('lng1');
-        const spotId = urlParams.get('spotId');
 
-        // Fetch coordinates of point 2 from Firebase Realtime Database based on spot ID
-        if (spotId) {
-            database.ref('parking_spots/' + spotId).once('value', function(snapshot) {
-                const spotData = snapshot.val();
-                const lat2 = spotData.latitude;
-                const lng2 = spotData.longitude;
+        // Fetch all parking spots from Firebase Realtime Database
+        database.ref('parking_spots').once('value', function(snapshot) {
+            const parkingSpots = snapshot.val();
+            let nearestSpot;
+            let minDistance = Infinity;
 
-                // Initialize map with provided coordinates for point 1 and point 2
-                if (lat1 && lng1 && lat2 && lng2) {
-                    initializeMap(parseFloat(lat1), parseFloat(lng1), parseFloat(lat2), parseFloat(lng2));
-                } else {
-                    console.error("Latitude and longitude are required for both points.");
+            // Find the nearest available parking spot to point 1
+            Object.keys(parkingSpots).forEach(spotId => {
+                const spot = parkingSpots[spotId];
+                if (!spot.occupied) {
+                    const distance = Math.sqrt((spot.latitude - lat1) ** 2 + (spot.longitude - lng1) ** 2);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestSpot = spot;
+                    }
                 }
             });
-        } else {
-            console.error("Spot ID is required.");
-        }
+
+            if (nearestSpot) {
+                // Initialize map with provided coordinates for point 1 and the nearest parking spot
+                initializeMap(parseFloat(lat1), parseFloat(lng1), nearestSpot.latitude, nearestSpot.longitude);
+            } else {
+                console.error("No available parking spots found.");
+            }
+        });
     </script>
 </body>
 </html>
