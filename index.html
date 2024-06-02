@@ -84,8 +84,8 @@
 
         // Get latitude and longitude from query parameters for point 1
         const urlParams = new URLSearchParams(window.location.search);
-        const lat1 = urlParams.get('lat1');
-        const lng1 = urlParams.get('lng1');
+        const lat1 = parseFloat(urlParams.get('lat1'));
+        const lng1 = parseFloat(urlParams.get('lng1'));
 
         // Fetch all parking spots from Firebase Realtime Database
         database.ref('parking_spots').once('value', function(snapshot) {
@@ -107,7 +107,7 @@
 
             if (nearestSpot) {
                 // Initialize map with provided coordinates for point 1 and the nearest parking spot
-                initializeMap(parseFloat(lat1), parseFloat(lng1), nearestSpot.latitude, nearestSpot.longitude);
+                initializeMap(lat1, lng1, nearestSpot.latitude, nearestSpot.longitude);
             } else {
                 console.error("No available parking spots found.");
             }
