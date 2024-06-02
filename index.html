@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Satellite Map API</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCSMlIol-7KSVR22X7WS6uceayDyNZM3bM",
+            authDomain: "smart-village.firebaseapp.com",
+            databaseURL: "https://smart-village-default-rtdb.firebaseio.com",
+            projectId: "smart-village",
+            storageBucket: "smart-village.appspot.com",
+            messagingSenderId: "377675537554",
+            appId: "1:377675537554:web:f24ce5ecc1f57ae3555a4b"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Reference to your Firebase database
+        const database = firebase.database();
+
+        mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+
+        function initializeMap(lat1, lng1, lat2, lng2) {
+            var map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/satellite-v9',
+                center: [lng1, lat1],
+                zoom: 12
+            });
+
+            // Add marker for the first point (red)
+            new mapboxgl.Marker({ color: 'red' })
+                .setLngLat([lng1, lat1])
+                .addTo(map);
+
+            // Fetch coordinates of point 2 from Firebase Realtime Database
+            database.ref('point2').once('value', function(snapshot) {
+                const point2 = snapshot.val();
+                const lat2 = point2.latitude;
+                const lng2 = point2.longitude;
+
+                // Add marker for the second point (blue)
+                new mapboxgl.Marker({ color: 'blue' })
+                    .setLngLat([lng2, lat2])
+                    .addTo(map);
+
+                // Fetch route using Mapbox Directions API
+                fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${lng1},${lat1};${lng2},${lat2}?geometries=geojson&access_token=${mapboxgl.accessToken}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        var route = data.routes[0].geometry;
+                        map.addLayer({
+                            'id': 'route',
+                            'type': 'line',
+                            'source': {
+                                'type': 'geojson',
+                                'data': {
+                                    'type': 'Feature',
+                                    'properties': {},
+                                    'geometry': route
+                                }
+                            },
+                            'layout': {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            'paint': {
+                                'line-color': '#3887be',
+                                'line-width': 8
+                            }
+                        });
+                    });
+            });
+        }
+
+        // Get latitude and longitude from query parameters for point 1
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat1 = urlParams.get('lat1');
+        const lng1 = urlParams.get('lng1');
+
+        // Initialize map with provided coordinates for point 1
+        if (lat1 && lng1) {
+            initializeMap(parseFloat(lat1), parseFloat(lng1));
+        } else {
+            console.error("Latitude and longitude are required for point 1.");
+        }
+    </script>
+</body>
+</html>
