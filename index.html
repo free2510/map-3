@@ -2,100 +2,34 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Satellite Map API</title>
-    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css" rel="stylesheet" />
-    <style>
-        body { margin: 0; padding: 0; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; }
-    </style>
+    <title>Test Firebase Connection</title>
 </head>
 <body>
-    <div id="map"></div>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js"></script>
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1IjoiZnJlZWZyZWU2MCIsImEiOiJjbHdyZ2hlamwwMGczMmlzYXJiem9oaHFxIn0.bp_4Do2mZmVjZwkDxlWmfw';
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCSMlIol-7KSVR22X7WS6uceayDyNZM3bM",
+            authDomain: "smart-village.firebaseapp.com",
+            databaseURL: "https://smart-village-default-rtdb.firebaseio.com",
+            projectId: "smart-village",
+            storageBucket: "smart-village.appspot.com",
+            messagingSenderId: "377675537554",
+            appId: "1:377675537554:web:f24ce5ecc1f57ae3555a4b"
+        };
 
-        function initializeMap(lat1, lng1, lat2, lng2) {
-            var map = new mapboxgl.Map({
-                container: 'map',
-                style: 'mapbox://styles/mapbox/satellite-v9',
-                center: [lng1, lat1],
-                zoom: 12
-            });
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
 
-            // Add marker for the starting point (red)
-            new mapboxgl.Marker({ color: 'red' })
-                .setLngLat([lng1, lat1])
-                .addTo(map);
+        // Reference to your Firebase database
+        const database = firebase.database();
 
-            // Add marker for the destination point (blue)
-            new mapboxgl.Marker({ color: 'blue' })
-                .setLngLat([lng2, lat2])
-                .addTo(map);
-
-            // Fetch route using Mapbox Directions API
-            fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${lng1},${lat1};${lng2},${lat2}?geometries=geojson&access_token=${mapboxgl.accessToken}`)
-                .then(response => response.json())
-                .then(data => {
-                    var route = data.routes[0].geometry;
-                    map.addLayer({
-                        'id': 'route',
-                        'type': 'line',
-                        'source': {
-                            'type': 'geojson',
-                            'data': {
-                                'type': 'Feature',
-                                'properties': {},
-                                'geometry': route
-                            }
-                        },
-                        'layout': {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        'paint': {
-                            'line-color': '#3887be',
-                            'line-width': 8
-                        }
-                    });
-                });
-
-        }
-
-        // Get latitude and longitude from query parameters for the starting point
-        const urlParams = new URLSearchParams(window.location.search);
-        const lat1 = parseFloat(urlParams.get('lat1'));
-        const lng1 = parseFloat(urlParams.get('lng1'));
-
-        // Fetch parking spots data from Firebase Realtime Database
-        fetch('https://smart-vilage-default-rtdb.firebaseio.com/parking_spots.json?auth=AIzaSyCSMlIol-7KSVR22X7WS6uceayDyNZM3bM')
-            .then(response => response.json())
-            .then(parkingSpots => {
-                let nearestSpot;
-                let minDistance = Infinity;
-
-                // Find the nearest available parking spot to the starting point
-                Object.values(parkingSpots).forEach(spot => {
-                    if (!spot.occupied) {
-                        const distance = Math.sqrt((spot.latitude - lat1) ** 2 + (spot.longitude - lng1) ** 2);
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            nearestSpot = spot;
-                        }
-                    }
-                });
-
-                if (nearestSpot) {
-                    // Initialize map with provided coordinates for the starting point and the nearest parking spot
-                    initializeMap(lat1, lng1, nearestSpot.latitude, nearestSpot.longitude);
-                } else {
-                    console.error("No available parking spots found.");
-                }
-            })
-            .catch(error => {
-                console.error("Error fetching parking spots:", error);
-            });
+        // Test the connection by fetching a sample value
+        database.ref('test').once('value', function(snapshot) {
+            const testValue = snapshot.val();
+            console.log("Test value from Firebase:", testValue);
+        });
     </script>
 </body>
 </html>
